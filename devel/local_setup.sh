@@ -1,0 +1,1 @@
+/home/quyen/orbslam3/src/ORB_SLAM3/devel/.private/catkin_tools_prebuild/local_setup.sh

@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include/simbody/SimTKcommon/internal",
+                "/home/quyen/orbslam3/src/ORB_SLAM3/include/**",
+                "/usr/include/simbody",
+                "/usr/local/include/opencv4",
+                "/usr/include/eigen3",
+                "/home/quyen/orbslam3/src/ORB_SLAM3/Thirdparty/g2o/g2o/types",
+                "/home/quyen/orbslam3/src/ORB_SLAM3",
+                "/home/quyen/orbslam3/src/ORB_SLAM3/Thirdparty/Sophus"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}

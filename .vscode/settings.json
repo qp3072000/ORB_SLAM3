@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "random": "cpp",
+        "condition_variable": "cpp",
+        "core": "cpp",
+        "specialfunctions": "cpp",
+        "ostream": "cpp",
+        "*.ipp": "cpp"
+    }
+}

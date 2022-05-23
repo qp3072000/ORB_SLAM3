@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/quyen/orbslam3/src/ORB_SLAM3/devel/.private/catkin_tools_prebuild/setup.sh
