@@ -344,6 +344,11 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const
 
         cv::resize(depthmap,imDepthToFeed,settings_->newImSize());
     }
+/*Covert BGR to GRAY*/
+    if (imToFeed.dims == 3) {
+        cout <<  "Number of color channels: " << imToFeed.dims;
+        cv::cvtColor(imToFeed,imToFeed, cv::COLOR_BGR2GRAY);
+    }
 
     // Check mode change
     {

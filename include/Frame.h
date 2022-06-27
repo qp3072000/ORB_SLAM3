@@ -35,9 +35,14 @@
 
 #include <mutex>
 #include <opencv2/opencv.hpp>
+#include<opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include "Eigen/Core"
 #include "sophus/se3.hpp"
+
+using namespace cv;
 
 namespace ORB_SLAM3
 {

@@ -27,6 +27,7 @@
 
 #include<opencv2/core/core.hpp>
 
+
 #include"../../../include/System.h"
 
 #include<geometry_msgs/Pose.h>
@@ -108,6 +109,11 @@ geometry_msgs::Pose sophusToPoseMsg(const Sophus::SE3f& s) {
    pose.position.y = translation.y();
    pose.position.z = translation.z();
 
+    // float scale_factor = 12.828459602551588;
+    // pose.position.x = scale_factor*translation.x();
+    // pose.position.y = scale_factor*translation.y();
+    // pose.position.z = scale_factor*translation.z();
+
    
    Eigen::Quaternionf quarternion = s.unit_quaternion();
    pose.orientation.w = quarternion.w();
@@ -133,15 +139,12 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    // Eigen::Matrix3d R;
-    // R << 0.9999522, -0.0013325,  0.0096853, 0.0015675,  0.9997035, -0.0242990, -0.0096501,  0.0243131,  0.9996578;
-    //Eigen::Quaternion<Sophus::SE3f::Scalar> Rc0w(0.012155108061, 0.004834683620, 0.000725122336, 0.999914173007);
-    // Eigen::Quaternion<Sophus::SE3f::Scalar> Rc0w(1,0, 0, 0);
-    Eigen::Quaternion<Sophus::SE3f::Scalar> Rbc(0.5,-0.5, 0.5, -0.5); // YAW -90 and roll -90
-    // Sophus::Vector3f tbc(0,0,0);
+    
+/*Parameter for Flightgoggles*/
+    /*Eigen::Quaternion<Sophus::SE3f::Scalar> Rbc(0.5,-0.5, 0.5, -0.5); // YAW -90 and ROLL -90 ZYX 
     Sophus::Vector3f tbc(0,0.05,0);
     // Sophus::SE3f Tbc = Sophus::SE3f(Rbc,tbc).inverse();
-    Sophus::SE3f Tbc(Rbc,tbc);
+    Sophus::SE3f Tbc(Rbc,tbc);  // Tbc := Tb0c0
     
     cout<<"Rbc"<< endl;
     cout<< Tbc.rotationMatrix()<<endl;
@@ -151,10 +154,11 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     // Tc0w.rotationMatrix() = R; 
     // Sophus::SE3f Tcb = Tbc.inverse();
 
-    Sophus::SE3f Tcw = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
-    Sophus::SE3f Twc = Tcw.inverse();
+
+    Sophus::SE3f Tcw = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec()); //Tcw := Tcc0
+    Sophus::SE3f Twc = Tcw.inverse();  // Twc := Tc0c
     cout<<"tcw: " << Tcw.translation()   <<endl;
-    cout<<"twc: " << Twc.translation()   <<endl;
+    cout<<"twc: " << Twc.translation()   <<endl;*/
 
     //Working
     // Sophus::SE3f Tbw = Tbc*Tcw;
@@ -167,20 +171,51 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     //  Checking: Twb =Tbc*Twb;
 
 
-    Sophus::SE3f Twb = Tbc*Twc;
-    // Twb =Twb*Tbc;
-    cout<<"twb NEW: " << Twb.translation()   <<endl;
+/*Scaling Twc*/
+    // float s = 12.828459602551588;
+    // Twc.translation() *= s;
+    // cout<<"twc - scaled: " << Twc.translation()   <<endl;
+ 
+    //Scaling Twc
+    // float s1 = 109.55;
+    // float s2 = 103.3;
+    // float s3 = 8.25;
+    // Twc.translation().x() *= s1;
+    // Twc.translation().y() *= s2;
+    // Twc.translation().z() *= s3;
 
-    // Eigen::Quaternion<Sophus::SE3f::Scalar> R_supp(0.7071068, 0, 0, 0.7071068 ); // YAW -90
-    // Sophus::Vector3f t_supp(0,0,0);
-    // Sophus::SE3f T_supp(R_supp,t_supp);
-    // cout<<"R_supp"<< endl;
-    // cout<< T_supp.rotationMatrix()<<endl;
-    // Twb = T_supp*Twb;
+/*Convert to world frame*/
+    /*Sophus::SE3f Twb = Tbc*Twc; // Twb := Tb0c
+    // Twb =Twb*Tbc;
+    cout<<"twb: " << Twb.translation()   <<endl;
+
+    geometry_msgs::Pose pm = sophusToPoseMsg(Twb);*/
+/*Parameter for AIRSIM */
+    /*Eigen::Quaternion<Sophus::SE3f::Scalar> Rbc(0.7071068, -0.7071068, 0, 0); 
+    Sophus::Vector3f tbc(0,0,0);  
+    Sophus::SE3f Tbc(Rbc,tbc);
+    Sophus::SE3f Tcw = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    Sophus::SE3f Twc = Tcw.inverse();
+
+    Sophus::SE3f Twb = Tbc*Twc;*/
+
+
+/*Parameter for Flightmare*/
+    Eigen::Quaternion<Sophus::SE3f::Scalar> Rbc(0.7071068, -0.7071068, 0, 0); 
+    Sophus::Vector3f tbc(0, 0, 0);  
+    Sophus::SE3f Tbc(Rbc,tbc);
+    Sophus::SE3f Tcw = mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    Sophus::SE3f Twc = Tcw.inverse();
+
+
     
 
+// /*Scaling Twc*/
+//     float s = 15.1059933907;
+//     Twc.translation() *= s;
 
-    // geometry_msgs::Pose pm = sophusToPoseMsg(Twc);
+    Sophus::SE3f Twb = Tbc*Twc;
+
     geometry_msgs::Pose pm = sophusToPoseMsg(Twb);
     this->pm = pm;
     this->ps.header.stamp = cv_ptr->header.stamp;
