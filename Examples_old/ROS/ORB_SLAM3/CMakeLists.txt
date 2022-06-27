@@ -53,7 +53,7 @@ ${Pangolin_INCLUDE_DIRS}
 )
 
 # set (OpenCV_LIBS "cv_bridge;/usr/local/lib/libopencv_core.so.4.5.5;/usr/local/lib/libopencv_imgproc.so.4.5.5;/usr/local/lib/libopencv_imgcodecs.so.4.5.5")
-set (OpenCV_LIBS "cv_bridge;/usr/local/lib/libopencv_core.so.4.5.5;/usr/local/lib/libopencv_imgproc.so.4.5.5;/usr/local/lib/libopencv_imgcodecs.so.4.5.5;/usr/local/lib/libopencv_highgui.so.4.5.5;/usr/local/lib/libopencv_features2d.so.4.5.5;/usr/local/lib/libopencv_stereo.so.4.5.5;/usr/local/lib/libopencv_ccalib.so.4.5.5;/usr/local/lib/libopencv_calib3d.so.4.5.5")
+set (OpenCV_LIBS "cv_bridge;/usr/local/lib/libopencv_core.so.4.5.5;/usr/local/lib/libopencv_imgproc.so.4.5.5;/usr/local/lib/libopencv_imgcodecs.so.4.5.5;/usr/local/lib/libopencv_highgui.so.4.5.5;/usr/local/lib/libopencv_features2d.so.4.5.5;/usr/local/lib/libopencv_stereo.so.4.5.5;/usr/local/lib/libopencv_ccalib.so.4.5.5;/usr/local/lib/libopencv_calib3d.so.4.5.5") 
 
 set(LIBS 
 ${OpenCV_LIBS} 
