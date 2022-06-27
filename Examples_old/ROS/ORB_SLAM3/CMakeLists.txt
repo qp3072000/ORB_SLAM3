@@ -52,7 +52,8 @@ ${PROJECT_SOURCE_DIR}/../../../include/CameraModels
 ${Pangolin_INCLUDE_DIRS}
 )
 
-set (OpenCV_LIBS "cv_bridge;/usr/local/lib/libopencv_core.so.4.5.5;/usr/local/lib/libopencv_imgproc.so.4.5.5;/usr/local/lib/libopencv_imgcodecs.so.4.5.5")
+# set (OpenCV_LIBS "cv_bridge;/usr/local/lib/libopencv_core.so.4.5.5;/usr/local/lib/libopencv_imgproc.so.4.5.5;/usr/local/lib/libopencv_imgcodecs.so.4.5.5")
+set (OpenCV_LIBS "cv_bridge;/usr/local/lib/libopencv_core.so.4.5.5;/usr/local/lib/libopencv_imgproc.so.4.5.5;/usr/local/lib/libopencv_imgcodecs.so.4.5.5;/usr/local/lib/libopencv_highgui.so.4.5.5;/usr/local/lib/libopencv_features2d.so.4.5.5;/usr/local/lib/libopencv_stereo.so.4.5.5;/usr/local/lib/libopencv_ccalib.so.4.5.5;/usr/local/lib/libopencv_calib3d.so.4.5.5")
 
 set(LIBS 
 ${OpenCV_LIBS} 
@@ -85,13 +86,12 @@ ${LIBS}
 # )
 
 # Node for stereo camera
-#rosbuild_add_executable(Stereo
-#src/ros_stereo.cc
-#)
-
-#target_link_libraries(Stereo
-#${LIBS}
-#)
+rosbuild_add_executable(Stereo
+src/ros_stereo.cc
+)
+target_link_libraries(Stereo
+${LIBS}
+)
 
 # Node for RGB-D camera
 rosbuild_add_executable(RGBD
@@ -111,11 +111,12 @@ target_link_libraries(Mono_Inertial
 ${LIBS}
 )
 
-# Node for stereo-inertial camera
-# rosbuild_add_executable(Stereo_Inertial
-#src/ros_stereo_inertial.cc
-# )
+#Node for stereo-inertial camera
+rosbuild_add_executable(Stereo_Inertial
+src/ros_stereo_inertial.cc
+)
 
-# target_link_libraries(Stereo_Inertial
-# ${LIBS}
-# )
+
+target_link_libraries(Stereo_Inertial
+${LIBS}
+)
