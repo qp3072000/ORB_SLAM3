@@ -31,8 +31,12 @@
 
 #include<opencv2/core/core.hpp>
 
+
 #include"../../../include/System.h"
 #include"../include/ImuTypes.h"
+
+#include<geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
 
 using namespace std;
 
@@ -50,6 +54,9 @@ class ImageGrabber
 {
 public:
     ImageGrabber(ORB_SLAM3::System* pSLAM, ImuGrabber *pImuGb, const bool bRect, const bool bClahe): mpSLAM(pSLAM), mpImuGb(pImuGb), do_rectify(bRect), mbClahe(bClahe){}
+
+    geometry_msgs::PoseStamped ps; //Quyen Pham
+    geometry_msgs::Pose pm;
 
     void GrabImageLeft(const sensor_msgs::ImageConstPtr& msg);
     void GrabImageRight(const sensor_msgs::ImageConstPtr& msg);
@@ -138,18 +145,49 @@ int main(int argc, char **argv)
     }
 
   // Maximum delay, 5 seconds
+  ros::NodeHandle nodeHandler;
   ros::Subscriber sub_imu = n.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb); 
   ros::Subscriber sub_img_left = n.subscribe("/camera/left/image_raw", 100, &ImageGrabber::GrabImageLeft,&igb);
   ros::Subscriber sub_img_right = n.subscribe("/camera/right/image_raw", 100, &ImageGrabber::GrabImageRight,&igb);
 
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
+  
+  ros::Publisher pub =  nodeHandler.advertise<geometry_msgs::PoseStamped>("out_odom", 100);
+  geometry_msgs::PoseStamped  out_odom;
+
+  ros::Rate ros_rate(10);
+    
+    while (ros::ok())
+    {
+        out_odom = igb.ps;
+        pub.publish(out_odom);
+        ros::spinOnce();
+        ros_rate.sleep();
+    }
 
   ros::spin();
 
   return 0;
 }
 
+geometry_msgs::Pose sophusToPoseMsg(const Sophus::SE3f& s) 
+{
+   geometry_msgs::Pose pose;
+   Eigen::Vector3f translation = s.translation();
+   // geometry_msgs::Point p;
+   // float scale_factor = 1.0;
+   pose.position.x = translation.x();
+   pose.position.y = translation.y();
+   pose.position.z = translation.z();
 
+Eigen::Quaternionf quarternion = s.unit_quaternion();
+   pose.orientation.w = quarternion.w();
+   pose.orientation.x = quarternion.x();
+   pose.orientation.y = quarternion.y();
+   pose.orientation.z = quarternion.z();
+   
+   return pose;
+ }
 
 void ImageGrabber::GrabImageLeft(const sensor_msgs::ImageConstPtr &img_msg)
 {
@@ -267,7 +305,36 @@ void ImageGrabber::SyncWithImu()
         cv::remap(imRight,imRight,M1r,M2r,cv::INTER_LINEAR);
       }
 
-      mpSLAM->TrackStereo(imLeft,imRight,tImLeft,vImuMeas);
+      //mpSLAM->TrackStereo(imLeft,imRight,tImLeft,vImuMeas);
+      /*Parameter for EuRoC*/
+      /*Eigen::Quaternion<Sophus::SE3f::Scalar> Rbc(0.7071068, 0.7071068, 0, 0); 
+      Sophus::Vector3f tbc(0, 0, 0);  
+      Sophus::SE3f Tbc(Rbc,tbc);*/
+
+      /*Parameter for Flightmare*/
+      Eigen::Quaternion<Sophus::SE3f::Scalar> Rbc(0.7071068, -0.7071068, 0, 0); 
+      Sophus::Vector3f tbc(0, 0, 0);  
+      Sophus::SE3f Tbc(Rbc,tbc);
+
+      Sophus::SE3f Tcw = mpSLAM->TrackStereo(imLeft,imRight,tImLeft,vImuMeas);//Quyen Pham
+      Sophus::SE3f Twc = Tcw.inverse();
+
+      Sophus::SE3f Twb = Tbc*Twc;
+      
+      ros::Time rostImLeft;
+      geometry_msgs::Pose pm = sophusToPoseMsg(Twb);
+      this->pm = pm;
+      // this->ps.header.stamp = cv_ptr->header.stamp;
+      // this->ps.header.frame_id = cv_ptr->header.frame_id;
+      // this->ps.header.seq = cv_ptr->header.seq;
+      // this->ps.header.stamp = cvDet->header.stamp;
+      // this->ps.header.frame_id = cvDet->header.frame_id;
+      // this->ps.header.seq = cvDet->header.seq;
+      this->ps.header.frame_id = "world";
+      this->ps.header.stamp = rostImLeft.fromSec(tImLeft);
+
+      this->ps.pose = pm;
+
 
       std::chrono::milliseconds tSleep(1);
       std::this_thread::sleep_for(tSleep);
@@ -282,5 +349,3 @@ void ImuGrabber::GrabImu(const sensor_msgs::ImuConstPtr &imu_msg)
   mBufMutex.unlock();
   return;
 }
-
-

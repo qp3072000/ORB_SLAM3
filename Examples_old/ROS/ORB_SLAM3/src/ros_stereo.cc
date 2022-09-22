@@ -28,10 +28,16 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-#include<opencv2/core/core.hpp>
-
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include"../../../include/System.h"
 
+
+#include<geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
+//#include <opencv2/imgcodecs/legacy/constants_c.h>
+#include <opencv2/imgcodecs/imgcodecs_c.h>
 using namespace std;
 
 class ImageGrabber
@@ -112,6 +118,12 @@ int main(int argc, char **argv)
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), left_sub,right_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabStereo,&igb,_1,_2));
+
+    ros::Publisher pub =  nh.advertise<geometry_msgs::PoseStamped>("out_odom", 1);
+    geometry_msgs::PoseStamped  out_odom;
+
+
+
 
     ros::spin();
 

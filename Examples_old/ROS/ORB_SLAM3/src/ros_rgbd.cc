@@ -32,13 +32,18 @@
 
 #include"../../../include/System.h"
 
+#include<geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
+
+
 using namespace std;
 
 class ImageGrabber
 {
 public:
     ImageGrabber(ORB_SLAM3::System* pSLAM):mpSLAM(pSLAM){}
-
+    geometry_msgs::Pose pm;
+    geometry_msgs::PoseStamped ps;
     void GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
 
     ORB_SLAM3::System* mpSLAM;
@@ -62,12 +67,29 @@ int main(int argc, char **argv)
     ImageGrabber igb(&SLAM);
 
     ros::NodeHandle nh;
-
+    
     message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/camera/rgb/image_raw", 100);
     message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "camera/depth_registered/image_raw", 100);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
+
+
+/*Write a publisher*/
+    ros::Publisher pub =  nh.advertise<geometry_msgs::PoseStamped>("out_odom", 100);
+    geometry_msgs::PoseStamped  out_odom;
+
+/*Change rate => equals rate of subscriber*/
+    ros::Rate ros_rate(10);
+    
+    while (ros::ok())
+    {
+        out_odom = igb.ps;
+        pub.publish(out_odom);
+        ros::spinOnce();
+        ros_rate.sleep();
+    }
+
 
     ros::spin();
 
@@ -81,6 +103,31 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+/*Convert Sophus:Se3f to geometry_msgs::Pose*/
+geometry_msgs::Pose sophusToPoseMsg(const Sophus::SE3f& s) {
+   geometry_msgs::Pose pose;
+   Eigen::Vector3f translation = s.translation();
+//    geometry_msgs::Point p;
+   float scale_factor = 1.0;
+   pose.position.x = translation.x();
+   pose.position.y = translation.y();
+   pose.position.z = translation.z();
+
+    // float scale_factor = 12.828459602551588;
+    // pose.position.x = scale_factor*translation.x();
+    // pose.position.y = scale_factor*translation.y();
+    // pose.position.z = scale_factor*translation.z();
+
+   
+   Eigen::Quaternionf quarternion = s.unit_quaternion();
+   pose.orientation.w = quarternion.w();
+   pose.orientation.x = quarternion.x();
+   pose.orientation.y = quarternion.y();
+   pose.orientation.z = quarternion.z();
+   
+   return pose;
+ }
 
 void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD)
 {
@@ -106,7 +153,27 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+
+/*Parameter for AIRSIM */
+    /*Eigen::Quaternion<Sophus::SE3f::Scalar> Rbc(0.7071068, -0.7071068, 0, 0); 
+    Sophus::Vector3f tbc(0,0,0);  
+    Sophus::SE3f Tbc(Rbc,tbc);
+    Sophus::SE3f Tcw = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    Sophus::SE3f Twc = Tcw.inverse();
+
+    Sophus::SE3f Twb = Tbc*Twc;*/
+
+/*Parameter for EuRoC*/
+    Sophus::SE3f Tcw = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    Sophus::SE3f Twc = Tcw.inverse();
+
+    geometry_msgs::Pose pm = sophusToPoseMsg(Twc);
+    this->pm = pm;
+    this->ps.header.stamp = cv_ptrRGB->header.stamp;
+    this->ps.header.frame_id = cv_ptrRGB->header.frame_id;
+    this->ps.header.seq = cv_ptrRGB->header.seq;
+
+    this->ps.pose = pm;
 }
 
 

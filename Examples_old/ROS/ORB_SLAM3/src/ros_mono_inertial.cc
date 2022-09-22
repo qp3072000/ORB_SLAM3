@@ -97,9 +97,9 @@ int main(int argc, char **argv)
   // Maximum delay, 5 seconds
   ros::Subscriber sub_imu = n.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb); 
   ros::Subscriber sub_img0 = n.subscribe("/camera/image_raw", 100, &ImageGrabber::GrabImage,&igb);
+  std::cout << "test" << std::endl;
 
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
-
   ros::spin();
 
   return 0;
@@ -139,7 +139,9 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
 }
 
 void ImageGrabber::SyncWithImu()
-{
+{ 
+  Sophus::SE3f test;
+
   while(1)
   {
     cv::Mat im;
@@ -175,7 +177,8 @@ void ImageGrabber::SyncWithImu()
       if(mbClahe)
         mClahe->apply(im,im);
 
-      mpSLAM->TrackMonocular(im,tIm,vImuMeas);
+      // test = mpSLAM->TrackMonocular(im,tIm,vImuMeas);
+      // std::cout <<< test.translation <<< std::endl;
     }
 
     std::chrono::milliseconds tSleep(1);
